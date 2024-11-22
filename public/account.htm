@@ -1,0 +1,93 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+    <style>
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+        #name {
+            font-size: 46px;
+            color: black;
+            text-align: center;
+        }
+        #main {
+            height: 70vh;
+            width: 100vw;
+            display: flex;
+            justify-content: space-around;
+        }
+        .a {
+            width: 46%;
+            height: 90%;
+            color: black;
+            overflow: hidden;
+        }
+        .a #fop{
+            position: absolute;
+            top: 12%;
+            display: flex;
+            flex-direction: column;
+            overflow-y: scroll;
+            overflow-x: hidden;
+        }
+
+        .a #fip{
+            position: absolute;
+            top: 12%;
+            display: flex;
+            flex-direction: column;
+            overflow-y: scroll;
+            overflow-x: hidden;
+        }
+    </style>
+</head>
+<body>
+    <h1 id="name">Username</h1>
+    <div id="main">
+        <div id="followers" class="a">
+            <h3 style="position: fixed;margin: 5px;">Followers</h3>
+            <div id="fop"></div>
+        </div>
+        <div id="following" class="a">
+            <h3 style="position: fixed;margin: 5px;">Following</h3>
+            <div id="fip"></div>
+        </div>
+    </div>
+
+    <script>
+        fetch('http://localhost:3000/users')
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error('Network response was not ok');
+                }
+                return response.json();
+            })
+            .then(data => {
+                const followersList = document.getElementById('fop');
+                const followingList = document.getElementById('fip');
+
+                // Add followers to the followers section
+                data.followers.forEach(follower => {
+                    const p = document.createElement('p');
+                    p.textContent = follower; // Just display the username
+                    followersList.appendChild(p);
+                });
+
+                // Add following to the following section
+                data.following.forEach(following => {
+                    const p = document.createElement('p');
+                    p.textContent = following; // Just display the username
+                    followingList.appendChild(p);
+                });
+            })
+            .catch(error => {
+                console.error('There was a problem with the fetch operation:', error);
+            });
+    </script>
+</body>
+</html>

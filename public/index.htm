@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <title>User Form</title>
+    <style>
+        .main {
+            height: 90%;
+            width: 60%;
+        }
+    </style>
+</head>
+
+<body>
+    <h1>Choose one of this</h1>
+    <button id="sign">sign up</button>
+    <button id="login">log in</button>
+    <div class="main" id="main"></div>
+
+    <script>
+        let a = document.getElementById("sign");
+        let b = document.getElementById("login");
+        a.addEventListener('click', () => {
+            document.getElementById('main').innerHTML = `
+                <h1>User Registration</h1>
+                <form action="/submit" method="POST">
+                    <label for="name">Name:</label>
+                    <input type="text" id="name" name="name" required>
+                    <br><br>
+                    <label for="email">Email:</label>
+                    <input type="email" id="email" name="email" required>
+                    <br><br>
+                    <label for="password">password:</label>
+                    <input type="password" id="password" name="password" required>
+                    <br><br>
+                    <button type="submit">sign up</button>
+                </form>
+            `
+        })
+
+        b.addEventListener('click', () => {
+            document.getElementById('main').innerHTML = `
+                <h1>User Registration</h1>
+                <form action="/login" method="POST">
+                    <label for="email">Email:</label>
+                    <input type="email" id="email" name="email" required>
+                    <br><br>
+                    <label for="name">password:</label>
+                    <input type="text" id="password" name="password" required>
+                    <br><br>
+                    <button type="submit">Submit</button>
+                </form>
+            `
+        })
+
+    </script>
+</body>
+
+</html>

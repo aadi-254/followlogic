@@ -1,3 +1,5 @@
+--this is for creating tables of database in mysql
+
 CREATE TABLE Followers (follower_id INT,followed_id INT,PRIMARY KEY (follower_id, followed_id),FOREIGN KEY (follower_id) REFERENCES Users(user_id) ON DELETE CASCADE,FOREIGN KEY (followed_id) REFERENCES Users(user_id) ON DELETE CASCADE);
 
 

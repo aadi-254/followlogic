@@ -1,1 +1,48 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Other Account</title>
+    <style>
+        body { font-family: Arial, sans-serif; }
+        h1 { text-align: center; }
+        #userData { text-align: center; }
+        p { font-size: 18px; }
+    </style>
+</head>
+<body>
+    <h1>Other Account</h1>
+    <div id="userData"></div>
+
+    <script src="/socket.io/socket.io.js"></script>
+    <script>
+        const socket = io();  // Connect to the server
+
+        // Get the username from the URL query parameters
+        const urlParams = new URLSearchParams(window.location.search);
+        const username = urlParams.get('username');  // Get the username from query params
+
+        if (username) {
+            // Emit a request to the server for user data
+            socket.emit('requestUserData', username);
+        }
+
+        // Listen for the 'userData' event to update the page
+        socket.on('userData', (data) => {
+            const userDataDiv = document.getElementById('userData');
+            userDataDiv.innerHTML = `
+                <p><strong>Username:</strong> ${data.username}</p>
+                <p><strong>Followers:</strong> ${data.followers.join(', ')}</p>
+                <p><strong>Following:</strong> ${data.following.join(', ')}</p>
+            `;
+        });
+
+        // Listen for error messages
+        socket.on('error', (message) => {
+            console.error(message);
+            alert(message);  // Show an error message to the user
+        });
+    </script>
+</body>
+</html>
 

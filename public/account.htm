@@ -44,10 +44,13 @@
             overflow-y: scroll;
             overflow-x: hidden;
         }
+        #searchForm { margin-top: 20px; text-align: center; }
+        #username { padding: 5px; width: 200px; }
+        #search { padding: 5px 10px; }
     </style>
 </head>
 <body>
-    <h1 id="name">Username</h1>
+    <h1 id="name"></h1>
     <div id="main">
         <div id="followers" class="a">
             <h3 style="position: fixed;margin: 5px;">Followers</h3>
@@ -57,8 +60,30 @@
             <h3 style="position: fixed;margin: 5px;">Following</h3>
             <div id="fip"></div>
         </div>
-    </div>
+    </div> 
+    <form id="searchForm" action="/search" method="POST">
+        <input type="text" id="username" name="search" placeholder="Enter username" required>
+        <button type="submit" id="search">Search</button>
+    </form>
 
+    <script>
+        // Optional: Handle the form submission using fetch for AJAX
+        document.getElementById("searchForm").addEventListener('submit', function(e) {
+            e.preventDefault();  // Prevent page reload
+            var username = document.getElementById("username").value;
+            window.location.href = "/otheraccount?username=" + username;  // Redirect to user profile page
+        });
+    </script>
+    <script src="/socket.io/socket.io.js"></script>
+    <script>
+        var socket = io();
+
+        // Function to search for a user
+       document.getElementById("search").addEventListener('click',()=>{
+            var username = document.getElementById('username').value;
+                socket.emit('requestUserData', username);
+          })
+        </script>
     <script>
         fetch('http://localhost:3000/users')
             .then(response => {
@@ -68,9 +93,13 @@
                 return response.json();
             })
             .then(data => {
+                const head = document.getElementById('name');
                 const followersList = document.getElementById('fop');
                 const followingList = document.getElementById('fip');
-
+                //add username
+                const p = document.createElement('p');
+                p.textContent = data.username; // Just display the username
+                head.appendChild(p);
                 // Add followers to the followers section
                 data.followers.forEach(follower => {
                     const p = document.createElement('p');
@@ -90,4 +119,3 @@
             });
     </script>
 </body>
-</html>

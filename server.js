@@ -1,9 +1,11 @@
-
+const http = require("http");
 const express = require('express');
 const app = express();
+const server = http.createServer(app);  // Use the server for Socket.IO
+const io = require('socket.io')(server);  // Initialize socket.io with the server
 const PORT = 3000;
 const mysql = require('mysql2');
-const cors = require('cors'); // To allow cross-origin requests
+const cors = require('cors');
 
 // Middleware to parse URL-encoded data
 app.use(express.urlencoded({ extended: false }));
@@ -90,11 +92,9 @@ app.post('/login', (req, res) => {
 
             // Route to fetch followers and following data
             // Assuming you have the following database structure
-            // followers (follower_id, followed_id) -> Mapping of which user follows which other user
-            // users (user_id, username, email, password)
 
-            app.get('/users', (req, res) => {
-                const userId = user.user_id; // Just an example, you would get the userId from session or JWT
+            app.get('/users', (req, res) => { //request sended at http://localhost:3000/users
+                const userId = user.user_id;
 
                 // Query to get followers
                 const followersQuery = `
@@ -147,6 +147,7 @@ app.post('/login', (req, res) => {
 
                         // Send the response with the arrays of followers and following
                         res.json({
+                            username: user.username,
                             followers: followers,
                             following: following
                         });
@@ -163,7 +164,110 @@ app.post('/login', (req, res) => {
     });
 });
 
-// Start the server
-app.listen(PORT, () => {
+
+//-----------searching process
+
+// Route to serve the OtherAccount page after search
+app.get('/otheraccount', (req, res) => {
+    const username = req.query.username;
+    if (!username) {
+        return res.status(400).send('No username provided');
+    }
+    res.sendFile(__dirname + '/public/OtherAccount.htm'); // User profile page
+});
+
+// Handle search form submission (search for a username)
+app.post('/search', (req, res) => {
+    const username = req.body.search;
+
+    // Validate input
+    if (!username) {
+        return res.status(400).json({ error: 'Username is required' });
+    }
+
+    // Define SQL query to fetch the user by username
+    const searchSql = `SELECT * FROM users WHERE username=?`;
+
+    con.query(searchSql, [username], (err, results) => {
+        if (err) {
+            console.error("Error executing search query: ", err);
+            return res.status(500).send("Error executing search query");
+        }
+
+        if (results.length === 0) {
+            return res.status(404).json({ error: 'User not found' });
+        }
+
+        // Redirect to the 'OtherAccount' page with the username
+        res.redirect('/otheraccount?username=' + username);
+    });
+});
+
+// Socket.io setup for real-time communication
+io.on('connection', (socket) => {
+    console.log('A user connected');
+
+    // Listen for 'requestUserData' event from client
+    socket.on('requestUserData', (username) => {
+        // Fetch user data from the database
+        const userIdQuery = `SELECT user_id, username FROM users WHERE username=?`;
+        
+        con.query(userIdQuery, [username], (err, results) => {
+            if (err) {
+                socket.emit('error', 'Error fetching user data');
+                return;
+            }
+
+            if (results.length === 0) {
+                socket.emit('error', 'User not found');
+                return;
+            }
+
+            const user = results[0];
+
+            // Fetch followers and following data for this user
+            const followersQuery = `
+                SELECT u.username FROM users u
+                INNER JOIN followers f ON u.user_id = f.follower_id
+                WHERE f.followed_id = ?;
+            `;
+            const followingQuery = `
+                SELECT u.username FROM users u
+                INNER JOIN followers f ON u.user_id = f.followed_id
+                WHERE f.follower_id = ?;
+            `;
+            con.query(followersQuery, [user.user_id], (err, followersResults) => {
+                if (err) {
+                    socket.emit('error', 'Error fetching followers');
+                    return;
+                }
+
+                con.query(followingQuery, [user.user_id], (err, followingResults) => {
+                    if (err) {
+                        socket.emit('error', 'Error fetching following');
+                        return;
+                    }
+
+                    // Send the data back to the client via socket
+                    socket.emit('userData', {
+                        username: user.username,
+                        followers: followersResults.map(f => f.username),
+                        following: followingResults.map(f => f.username)
+                    });
+                });
+            });
+        });
+    });
+
+    // Handle disconnection
+    socket.on('disconnect', () => {
+        console.log('user disconnected');
+    });
+});
+
+
+server.listen(PORT, () => {
     console.log(`Server is running on http://localhost:${PORT}`);
 });
+
+
